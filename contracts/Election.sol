@@ -8,5 +8,4 @@ contract Election {
     constructor() public {
         candidat = "Candidat 1";
     }
-
 }
