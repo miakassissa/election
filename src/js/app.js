@@ -80,8 +80,9 @@ App = {
     web3.eth.getAccounts(function (err, account) {      
     // web3.eth.getCoinbase(function(err, account) {
       if (err === null) {
-        App.account = account;
-        $("#accountAddress").html("Votre Compte: " + account);
+        App.account = account[0];
+        $("#accountAddress").html("Votre Compte: " + account[0]);
+        // console.log(account[0]);
       }
     });
 
