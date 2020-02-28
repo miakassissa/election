@@ -91,8 +91,11 @@ App = {
       electionInstance = instance;
       return electionInstance.decompteCandidats();
     }).then(function (decompteCandidats) {
-      var candidatesResults = $("#candidatesResults");
+      var candidatesResults = $('#candidatesResults');
       candidatesResults.empty();
+
+      var candidatesSelect = $('#candidatesSelect');
+      candidatesSelect.empty();
 
       for(var i=1; i <= decompteCandidats; i++) {
         electionInstance.candidats(i).then(function(candidat) {
@@ -103,16 +106,37 @@ App = {
           // Rendre les résultas du candidat
           var templateCandidat = "<tr><th>" + id + "</th><td>" + nom + "</td><td>" + nbreVotes + "</td></tr>";
           candidatesResults.append(templateCandidat);
-        });
+          
+          // Rendre l'option "ballot" pour candidat
+          var optionCandidat = "<option value='" + id + "' >" + nom + "</option>";
+          candidatesSelect.append(optionCandidat);        
+        });        
       }
-
+      return electionInstance.electeurs(App.account);
+    }).then(function(hasVoted) {
+      // Ne pas permettre de voter
+      if(hasVoted) {
+        $('form').hide();
+      }
       loader.hide();
       content.show();
-
     }).catch(function(error) {
       console.warn(error);
     });
   },
+
+  castVote: function() {
+    var idCandidat = $('#candidatesSelect').val();
+    App.contracts.Election.deployed().then(function(instance) {
+      return instance.vote(idCandidat, { from: App.account });
+    }).then(function(result) {
+      // Attendre les mises à jour de vote
+      $("#content").hide();
+      $("#loader").show();
+    }).catch(function(err) {
+      console.error(err);
+    });
+  }
 
   /* Code Initial
   bindEvents: function () {
