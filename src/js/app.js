@@ -57,14 +57,35 @@ App = {
     return App.initContract();
   },
 
-  initContract: function() {
+  initContract: async function() {
     $.getJSON("Election.json", function(election) {
       // Instancier un nouveau contrat Truffle depuis l'artifact
       App.contracts.Election = TruffleContract(election);
       // Connecter le fournisseur pour interagir avec le contrat
-      App.contracts.Election.setProvider(App.web3Provider);
-      
+      App.contracts.Election.setProvider(App.web3Provider);      
+
+      // On appelle la fonction qui écoute nos événements de votes à chaque initialisation du Smart Contract
+      App.listenForEvents();
+
       return App.render();
+    });
+  },
+
+  // Ecouter les événements émis depuis le Smart Contract
+  listenForEvents: function() {
+    App.contracts.Election.deployed().then(function(instance) {
+      // Redémarrer Chrome au cas où il est impossible de recevoir cet événement
+      // C'est un problème courant avec MetaMask
+      // https://github.com/MetaMask/metamask-extension/issues/2393
+      instance.evVote({}, {
+        // On veut s'abonner à ces événements du premier bloc au dernier de notre Blockchain
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch(function(error, event) {
+        console.log("événement déclenché", event);
+        // Recharger dès qu'un nouvel événement est reçu ou enregistré
+        App.render();
+      });
     });
   },
 
@@ -107,7 +128,7 @@ App = {
           var templateCandidat = "<tr><th>" + id + "</th><td>" + nom + "</td><td>" + nbreVotes + "</td></tr>";
           candidatesResults.append(templateCandidat);
           
-          // Rendre l'option "ballot" pour candidat
+          // Rendre/Afficher l'option "ballot/Scrutin" pour candidat
           var optionCandidat = "<option value='" + id + "' >" + nom + "</option>";
           candidatesSelect.append(optionCandidat);        
         });        
@@ -125,7 +146,7 @@ App = {
     });
   },
 
-  castVote: function() {
+  castVote: async function() {
     var idCandidat = $('#candidatesSelect').val();
     App.contracts.Election.deployed().then(function(instance) {
       return instance.vote(idCandidat, { from: App.account });

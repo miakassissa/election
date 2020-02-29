@@ -21,6 +21,11 @@ contract Election {
     // Stocker le décompte des Candidats
     uint public decompteCandidats;
 
+    // Evénement de Vote à déclencher à chaque appel de la fonciton vote()
+    event evVote (
+        uint indexed _idCandidat
+    );
+
     // Constructor
     constructor() public {
         ajoutCandidat("Candidat 1");
@@ -58,5 +63,8 @@ contract Election {
 
         // Mettre à jour le nombre de votes reçu par le candidat
         candidats[_idCandidat].nbrVotes++;
+
+        // Déclencher l'évenement de vote
+        emit evVote(_idCandidat);
     }
 }
